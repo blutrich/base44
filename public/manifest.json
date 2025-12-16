@@ -1,0 +1,20 @@
+{
+  "name": "Base44 Community Q&A",
+  "short_name": "Base44 Q&A",
+  "description": "שאל שאלות על Base44 וקבל תשובות מהקהילה",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E8F4FD",
+  "theme_color": "#FF6B35",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "he",
+  "dir": "rtl"
+}

@@ -1,26 +1,528 @@
 @import "tailwindcss";
 
+/* ============================================
+   Base44 Production Design System
+   ============================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Colors */
+  --base44-orange: #FF6B35;
+  --base44-orange-hover: #E55A2B;
+  --base44-orange-light: #FFF7F3;
+  --base44-orange-glow: rgba(255, 107, 53, 0.25);
+  --base44-dark: #1A1A2E;
+  --base44-text: #6B7280;
+  --base44-text-dark: #374151;
+  --base44-white: #FFFFFF;
+
+  /* Typography */
+  --font-wix-text: 'Wix Madefor Text', var(--font-heebo), system-ui, sans-serif;
+  --font-wix-display: 'Wix Madefor Display', var(--font-heebo), system-ui, sans-serif;
+
+  /* Card System (Base44 Brand Spec) */
+  --card-radius: 24px;
+  --button-radius: 12px;
+  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --card-shadow-elevated: 0 12px 48px rgba(0, 0, 0, 0.12);
+
+  /* Soft Pastel Gradients */
+  --gradient-bg: linear-gradient(135deg, #E8F4FD 0%, #FDF2E8 50%, #E8FDF4 100%);
+  --gradient-orange: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  --gradient-orange-hover: linear-gradient(135deg, #FF7D4D 0%, #FF6B35 100%);
+
+  /* Glass Effect */
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-bg-light: rgba(255, 255, 255, 0.7);
+  --glass-blur: 16px;
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-border-subtle: rgba(0, 0, 0, 0.04);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ============================================
+   Base Styles
+   ============================================ */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: -webkit-fill-available;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-wix-text);
+  background: var(--gradient-bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior-y: contain;
+  -webkit-text-size-adjust: 100%;
+  color: var(--base44-text-dark);
+}
+
+/* iOS Safe Areas */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ============================================
+   Mobile-First Optimizations
+   ============================================ */
+
+/* Prevent overscroll bounce on iOS */
+html, body {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#__next, main {
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Smooth scrolling on iOS */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent text selection on interactive elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Mobile landscape adjustments */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --card-radius: 16px;
+  }
+}
+
+/* Small phones (iPhone SE, etc.) */
+@media screen and (max-width: 375px) {
+  :root {
+    --card-radius: 20px;
+    --button-radius: 10px;
+  }
+
+  .action-pill {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   Animations - Refined & Subtle
+   ============================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Animation Utilities */
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-subtle-float {
+  animation: subtleFloat 6s ease-in-out infinite;
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 3s ease-in-out infinite;
+}
+
+/* Staggered Animation Delays */
+.delay-75 { animation-delay: 75ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   Glass Morphism
+   ============================================ */
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+}
+
+.glass-card-elevated {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow-elevated);
+}
+
+/* ============================================
+   Base44 Button Styles
+   ============================================ */
+
+.btn-base44 {
+  background: var(--gradient-orange);
+  color: white;
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: var(--button-radius);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px var(--base44-orange-glow);
+}
+
+.btn-base44:hover {
+  background: var(--gradient-orange-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--base44-orange-glow);
+}
+
+.btn-base44:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px var(--base44-orange-glow);
+}
+
+.btn-base44:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: white;
+  color: var(--base44-text-dark);
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--button-radius);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.btn-secondary:hover {
+  border-color: var(--base44-orange);
+  color: var(--base44-orange);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ============================================
+   Card Styles
+   ============================================ */
+
+.card-base44 {
+  background: var(--base44-white);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s ease;
+}
+
+.card-base44:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* ============================================
+   Form Elements
+   ============================================ */
+
+.input-base44 {
+  background: white;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--button-radius);
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--base44-text-dark);
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.input-base44::placeholder {
+  color: #9CA3AF;
+}
+
+.input-base44:focus {
+  outline: none;
+  border-color: var(--base44-orange);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.04),
+    0 0 0 3px var(--base44-orange-glow);
+}
+
+.input-base44:disabled {
+  background: #F9FAFB;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Scrollbar - Desktop Only
+   ============================================ */
+
+@media (min-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
+}
+
+/* Hide Scrollbar Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   Touch Optimization
+   ============================================ */
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+button, a, input, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS Zoom on Input Focus */
+@media screen and (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* ============================================
+   Typography Utilities
+   ============================================ */
+
+.font-display {
+  font-family: var(--font-wix-display);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* ============================================
+   Background Decorations
+   ============================================ */
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.bg-orb-orange {
+  background: rgba(255, 107, 53, 0.3);
+}
+
+.bg-orb-blue {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.bg-orb-green {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+/* ============================================
+   Message Bubble Styles
+   ============================================ */
+
+.message-user {
+  background: var(--gradient-orange);
+  color: white;
+  border-radius: 20px 20px 6px 20px;
+  box-shadow: 0 2px 12px var(--base44-orange-glow);
+}
+
+.message-assistant {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: 20px 20px 20px 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================
+   Prose Overrides for Markdown
+   ============================================ */
+
+.prose-base44 {
+  --tw-prose-links: var(--base44-orange);
+}
+
+.prose-base44 a {
+  color: var(--base44-orange);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.prose-base44 a:hover {
+  color: var(--base44-orange-hover);
+}
+
+.prose-base44 code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.prose-base44 pre {
+  background: var(--base44-dark);
+  border-radius: 12px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.prose-base44 pre code {
+  background: transparent;
+  padding: 0;
+  color: #E5E7EB;
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--base44-orange);
+  border-radius: 50%;
+  animation: bounce 0.6s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* ============================================
+   Quick Action Pills
+   ============================================ */
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base44-text-dark);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.action-pill:hover {
+  border-color: var(--base44-orange);
+  color: var(--base44-orange);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.action-pill:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.action-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
