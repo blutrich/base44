@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-  
+
   if (!process.env.PINECONE_API_KEY || process.env.PINECONE_API_KEY === 'YOUR_API_KEY') {
     console.error('❌ PINECONE_API_KEY is not set or is placeholder!');
     return new Response(
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { messages, threadId, resourceId } = await request.json();
+    const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'Messages are required' }), {
@@ -34,20 +34,15 @@ export async function POST(request: NextRequest) {
 
     // Get the last user message
     const lastMessage = messages[messages.length - 1];
-    
+
     console.log('📤 Sending to agent:', lastMessage.content.substring(0, 50) + '...');
-    
-    // Stream the response from Mastra agent (no memory - Vercel compatible)
+
+    // Stream the response from Mastra agent
     const response = await base44Agent.stream(lastMessage.content);
 
     console.log('✅ Stream started');
-    
-    // Return the stream - handle both old and new API
-    if (typeof response.toTextStreamResponse === 'function') {
-      return response.toTextStreamResponse();
-    }
-    
-    // Fallback: create a ReadableStream from the response
+
+    // Create a ReadableStream from the textStream
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -56,6 +51,7 @@ export async function POST(request: NextRequest) {
           }
           controller.close();
         } catch (error) {
+          console.error('Stream error:', error);
           controller.error(error);
         }
       },
@@ -65,12 +61,13 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
       },
     });
   } catch (error) {
     console.error('❌ Chat API error:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Failed to process request',
         details: error instanceof Error ? error.message : 'Unknown error'
       }),
