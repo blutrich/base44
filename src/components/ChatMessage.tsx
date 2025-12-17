@@ -1,6 +1,7 @@
 'use client';
 
 import ReactMarkdown from 'react-markdown';
+import { useEffect, useState } from 'react';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -10,38 +11,49 @@ interface ChatMessageProps {
 
 export default function ChatMessage({ role, content, isNew = false }: ChatMessageProps) {
   const isUser = role === 'user';
+  const [isVisible, setIsVisible] = useState(!isNew);
+
+  useEffect(() => {
+    if (isNew) {
+      // Small delay for smooth entrance
+      const timer = setTimeout(() => setIsVisible(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isNew]);
 
   return (
     <div
-      className={`flex ${isUser ? 'justify-start' : 'justify-end'} ${
-        isNew ? 'animate-fade-in-up' : ''
-      }`}
+      className={`
+        flex ${isUser ? 'justify-start' : 'justify-end'}
+        transition-all duration-300 ease-out
+        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
+      `}
     >
       {/* Assistant Avatar - Only for assistant messages */}
       {!isUser && (
-        <div className="flex-shrink-0 mr-2.5 mt-1">
+        <div className="flex-shrink-0 mr-2 mt-1 transition-opacity duration-300" style={{ opacity: isVisible ? 1 : 0 }}>
           <img
             src="/logo.png"
-            alt="Community Knowledge"
-            className="w-7 h-7 object-contain"
+            alt=""
+            className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
           />
         </div>
       )}
 
       {/* Message Bubble */}
       <div
-        className={`max-w-[85%] sm:max-w-[80%] px-4 py-3 ${
-          isUser
-            ? 'message-user'
-            : 'message-assistant'
-        }`}
+        className={`
+          max-w-[85%] sm:max-w-[80%] px-3.5 py-2.5 sm:px-4 sm:py-3
+          transition-all duration-300
+          ${isUser ? 'message-user' : 'message-assistant'}
+        `}
       >
         {isUser ? (
-          <p className="whitespace-pre-wrap text-sm sm:text-[15px] leading-relaxed break-words">
+          <p className="whitespace-pre-wrap text-[14px] sm:text-[15px] leading-relaxed break-words">
             {content}
           </p>
         ) : (
-          <div className="prose-base44 text-sm sm:text-[15px] leading-relaxed">
+          <div className="prose-base44 text-[14px] sm:text-[15px] leading-relaxed">
             <ReactMarkdown
               components={{
                 a: ({ href, children }) => (
@@ -81,7 +93,7 @@ export default function ChatMessage({ role, content, isNew = false }: ChatMessag
                   </code>
                 ),
                 pre: ({ children }) => (
-                  <pre className="bg-[#1A1A2E] text-gray-100 p-4 rounded-xl overflow-x-auto text-[13px] my-3 shadow-inner">
+                  <pre className="bg-[#1A1A2E] text-gray-100 p-3 sm:p-4 rounded-xl overflow-x-auto text-[12px] sm:text-[13px] my-3 shadow-inner">
                     {children}
                   </pre>
                 ),

@@ -9,8 +9,23 @@ interface ChatInputProps {
 
 export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-focus on mount (desktop only)
+  useEffect(() => {
+    if (window.innerWidth >= 640) {
+      textareaRef.current?.focus();
+    }
+  }, []);
+
+  // Re-focus after sending (desktop only)
+  useEffect(() => {
+    if (!disabled && window.innerWidth >= 640) {
+      textareaRef.current?.focus();
+    }
+  }, [disabled]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -24,7 +39,6 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   // Handle iOS virtual keyboard
   useEffect(() => {
     const handleResize = () => {
-      // Scroll input into view when keyboard opens
       if (document.activeElement === textareaRef.current) {
         setTimeout(() => {
           textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -32,17 +46,23 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
       }
     };
 
-    // Use visualViewport API for better keyboard detection
     if (typeof window !== 'undefined' && window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
       return () => window.visualViewport?.removeEventListener('resize', handleResize);
     }
   }, []);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() && !disabled) {
+      setIsSending(true);
+
+      // Brief animation delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       onSend(input.trim());
       setInput('');
+      setIsSending(false);
+
       // Reset height after sending
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -62,11 +82,12 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   const handleFocus = () => {
-    // Ensure input is visible when focused on mobile
     setTimeout(() => {
       containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 300);
   };
+
+  const canSend = input.trim().length > 0 && !disabled && !isSending;
 
   return (
     <div
@@ -97,10 +118,10 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
-            className="
+            className={`
               w-full resize-none
               rounded-xl
-              border-[1.5px] border-black/[0.08]
+              border-[1.5px]
               bg-white
               px-3 py-2.5 sm:px-4 sm:py-3
               text-[16px] sm:text-[15px]
@@ -108,46 +129,46 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
               placeholder:text-[#9CA3AF]
               transition-all duration-200
               shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]
-              focus:border-[#FF6B35]
               focus:outline-none
               focus:ring-[3px]
-              focus:ring-[rgba(255,107,53,0.15)]
               disabled:bg-[#F9FAFB]
               disabled:text-[#9CA3AF]
               disabled:cursor-not-allowed
               touch-manipulation
-            "
+              ${disabled ? 'border-black/[0.04]' : canSend ? 'border-[#FF6B35]/50 focus:border-[#FF6B35] focus:ring-[rgba(255,107,53,0.15)]' : 'border-black/[0.08] focus:border-[#FF6B35] focus:ring-[rgba(255,107,53,0.15)]'}
+            `}
             style={{ minHeight: '44px', maxHeight: '100px' }}
           />
+
+          {/* Character indicator - subtle hint when typing */}
+          {input.length > 0 && (
+            <div className="absolute left-3 bottom-2 text-[10px] text-[#9CA3AF] transition-opacity">
+              Enter ↵
+            </div>
+          )}
         </div>
 
         {/* Send Button */}
         <button
           onClick={handleSend}
-          disabled={disabled || !input.trim()}
-          className="
+          disabled={!canSend}
+          className={`
             group
             relative
             rounded-xl
-            bg-gradient-to-br from-[#FF6B35] to-[#E55A2B]
             p-2.5 sm:p-3
             text-white
-            shadow-md
-            shadow-[rgba(255,107,53,0.25)]
             transition-all duration-200
-            active:scale-[0.95]
-            active:shadow-sm
-            disabled:from-[#E5E7EB]
-            disabled:to-[#D1D5DB]
-            disabled:text-[#9CA3AF]
-            disabled:shadow-none
-            disabled:cursor-not-allowed
-            disabled:active:scale-100
             touch-manipulation
             min-w-[44px] min-h-[44px]
             flex items-center justify-center
             flex-shrink-0
-          "
+            ${canSend
+              ? 'bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] shadow-md shadow-[rgba(255,107,53,0.25)] active:scale-[0.95] active:shadow-sm'
+              : 'bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed'
+            }
+            ${isSending ? 'scale-95' : ''}
+          `}
           aria-label="שלח הודעה"
         >
           {disabled ? (
@@ -172,7 +193,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
             </svg>
           ) : (
             <svg
-              className="w-5 h-5 transition-transform duration-150 group-active:scale-90"
+              className={`w-5 h-5 transition-transform duration-150 ${isSending ? 'translate-y-[-2px] scale-110' : ''} ${canSend ? 'group-active:scale-90' : ''}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -190,7 +211,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
 
       {/* Footer Text - Hidden on small screens */}
       <p className="hidden sm:block text-[10px] text-[#9CA3AF] mt-2 text-center">
-        התשובות מבוססות על ידע מקהילת Base44
+        מבוסס על ידע מקהילת Base44 • Shift+Enter לשורה חדשה
       </p>
     </div>
   );
