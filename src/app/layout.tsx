@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Wix_Madefor_Text, Wix_Madefor_Display, Heebo } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 
 // Wix Madefor Text - Primary body font
@@ -86,6 +87,7 @@ export default function RootLayout({
         `}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );

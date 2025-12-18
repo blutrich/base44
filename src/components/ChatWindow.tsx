@@ -12,10 +12,10 @@ interface Message {
 }
 
 const QUICK_ACTIONS = [
-  { label: 'איך מחברים API?', icon: '🔌' },
-  { label: 'סליקה עם Stripe', icon: '💳' },
-  { label: 'בעיות אותנטיקציה', icon: '🔐' },
-  { label: 'עיצוב RTL', icon: '◀' },
+  { label: 'אינטגרציות ו-API', icon: '🔌' },
+  { label: 'סליקה ותשלומים', icon: '💳' },
+  { label: 'Backend Functions', icon: '⚙️' },
+  { label: 'עיצוב למובייל', icon: '📱' },
 ];
 
 // Generate unique ID
@@ -58,7 +58,7 @@ export default function ChatWindow() {
       const welcomeMessages = [
         'שלום! 👋',
         'אני העוזר הקהילתי של Base44.',
-        'אני יכול לעזור לך עם שאלות על הפלטפורמה, אינטגרציות, סליקה, עיצוב ועוד.',
+        'יש לי ידע מ-349 שאלות ותשובות מהקהילה - אינטגרציות, סליקה, Backend, עיצוב ועוד.',
         'מה תרצה לדעת?'
       ];
 
@@ -102,7 +102,7 @@ export default function ChatWindow() {
       setShowWelcome(false);
       setMessages([{
         role: 'assistant',
-        content: 'שלום! 👋\n\nאני העוזר הקהילתי של Base44.\n\nאני יכול לעזור לך עם שאלות על הפלטפורמה, אינטגרציות, סליקה, עיצוב ועוד.\n\nמה תרצה לדעת?',
+        content: 'שלום! 👋\n\nאני העוזר הקהילתי של Base44.\n\nיש לי ידע מ-349 שאלות ותשובות מהקהילה - אינטגרציות, סליקה, Backend, עיצוב ועוד.\n\nמה תרצה לדעת?',
         id: generateId()
       }]);
     }
@@ -206,7 +206,7 @@ export default function ChatWindow() {
   const welcomeMessages = [
     'שלום! 👋',
     'אני העוזר הקהילתי של Base44.',
-    'אני יכול לעזור לך עם שאלות על הפלטפורמה, אינטגרציות, סליקה, עיצוב ועוד.',
+    'יש לי ידע מ-349 שאלות ותשובות מהקהילה - אינטגרציות, סליקה, Backend, עיצוב ועוד.',
     'מה תרצה לדעת?'
   ];
 
@@ -256,8 +256,8 @@ export default function ChatWindow() {
         </div>
       </div>
 
-      {/* Quick Actions - Only at start */}
-      {(messages.length === 0 || showWelcome) && (
+      {/* Quick Actions - Show until user sends first message */}
+      {(messages.length <= 1) && (
         <div className="px-2 py-2 sm:px-4 sm:py-2.5 border-b border-black/[0.04] bg-[#FAFAFA]/80 flex-shrink-0 animate-fade-in">
           <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-hide -mx-0.5 px-0.5">
             {QUICK_ACTIONS.map((action, index) => (
