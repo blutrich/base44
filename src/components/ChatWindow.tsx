@@ -18,15 +18,26 @@ const QUICK_ACTIONS = [
   { label: 'עיצוב RTL', icon: '◀' },
 ];
 
-const FOLLOW_UP_SUGGESTIONS = [
-  'ספר לי עוד',
-  'איך מיישמים את זה?',
-  'יש דוגמת קוד?',
-  'מה עוד חשוב לדעת?',
-];
-
 // Generate unique ID
 const generateId = () => Math.random().toString(36).substring(2, 9);
+
+// Parse follow-up suggestions from response
+// Format: [המשך: שאלה1? | שאלה2? | שאלה3?]
+const parseFollowUps = (content: string): { cleanContent: string; followUps: string[] } => {
+  const followUpPattern = /\[המשך:\s*([^\]]+)\]/;
+  const match = content.match(followUpPattern);
+
+  if (match) {
+    const followUps = match[1]
+      .split('|')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+    const cleanContent = content.replace(followUpPattern, '').trim();
+    return { cleanContent, followUps };
+  }
+
+  return { cleanContent: content, followUps: [] };
+};
 
 export default function ChatWindow() {
   const { resourceId, threadId, newThread } = useBrowserMemory();
@@ -36,6 +47,7 @@ export default function ChatWindow() {
   const [streamingContent, setStreamingContent] = useState('');
   const [showWelcome, setShowWelcome] = useState(true);
   const [welcomeStep, setWelcomeStep] = useState(0);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -56,7 +68,6 @@ export default function ChatWindow() {
         }, welcomeStep === 0 ? 500 : 800);
         return () => clearTimeout(timer);
       } else {
-        // All welcome steps done, add as a single message
         setMessages([{
           role: 'assistant',
           content: welcomeMessages.join('\n\n'),
@@ -78,10 +89,13 @@ export default function ChatWindow() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingContent, isTyping, scrollToBottom]);
+  }, [messages, streamingContent, isTyping, followUpSuggestions, scrollToBottom]);
 
   const handleSend = async (content: string) => {
     if (!resourceId || !threadId) return;
+
+    // Clear follow-ups when user sends a message
+    setFollowUpSuggestions([]);
 
     // Hide welcome if still showing
     if (showWelcome) {
@@ -104,7 +118,7 @@ export default function ChatWindow() {
     }
     abortControllerRef.current = new AbortController();
 
-    // Simulate brief "thinking" delay for natural feel
+    // Brief "thinking" delay for natural feel
     await new Promise(resolve => setTimeout(resolve, 400));
 
     try {
@@ -139,15 +153,25 @@ export default function ChatWindow() {
 
           const chunk = decoder.decode(value, { stream: true });
           fullContent += chunk;
-          setStreamingContent(fullContent);
+          // Show streaming without follow-ups for cleaner experience
+          const { cleanContent } = parseFollowUps(fullContent);
+          setStreamingContent(cleanContent);
         }
       }
 
+      // Parse final response for follow-ups
+      const { cleanContent, followUps } = parseFollowUps(fullContent);
+
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: fullContent || 'לא קיבלתי תשובה. נסה שוב.', id: generateId() },
+        { role: 'assistant', content: cleanContent || 'לא קיבלתי תשובה. נסה שוב.', id: generateId() },
       ]);
       setStreamingContent('');
+
+      // Set follow-ups if found
+      if (followUps.length > 0) {
+        setFollowUpSuggestions(followUps);
+      }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         return;
@@ -176,6 +200,7 @@ export default function ChatWindow() {
     setWelcomeStep(0);
     setStreamingContent('');
     setIsTyping(false);
+    setFollowUpSuggestions([]);
   };
 
   const welcomeMessages = [
@@ -185,31 +210,23 @@ export default function ChatWindow() {
     'מה תרצה לדעת?'
   ];
 
-  // Check if we should show follow-up suggestions
-  const showFollowUps = messages.length >= 2 &&
-    messages[messages.length - 1]?.role === 'assistant' &&
-    !isLoading &&
-    !streamingContent;
+  // Show follow-ups only when we have them and not loading
+  const showFollowUps = followUpSuggestions.length > 0 && !isLoading && !streamingContent;
 
   return (
     <div className="flex flex-col h-full glass-card-elevated rounded-2xl sm:rounded-3xl overflow-hidden">
-      {/* Glass Header - Compact on mobile */}
+      {/* Glass Header */}
       <div className="relative px-3 py-3 sm:px-5 sm:py-4 border-b border-white/20 flex-shrink-0 bg-white/60 backdrop-blur-md">
         <div className="flex items-center justify-between">
-          {/* Left: Logo + Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            {/* Community Knowledge Logo */}
             <div className="relative flex-shrink-0">
               <img
                 src="/logo.png"
                 alt="Community Knowledge"
                 className="w-9 h-9 sm:w-10 sm:h-10 object-contain"
               />
-              {/* Online Indicator */}
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-500 rounded-full border-2 border-white shadow-sm" />
             </div>
-
-            {/* Title + Subtitle */}
             <div className="min-w-0">
               <h1 className="font-display font-semibold text-[#1A1A2E] text-sm sm:text-base leading-tight truncate">
                 עוזר קהילתי
@@ -220,8 +237,6 @@ export default function ChatWindow() {
               </p>
             </div>
           </div>
-
-          {/* Right: New Chat Button */}
           <button
             onClick={handleNewChat}
             className="group p-2 sm:p-2.5 text-[#6B7280] hover:text-[#FF6B35] active:text-[#FF6B35] hover:bg-[#FF6B35]/10 active:bg-[#FF6B35]/20 rounded-xl transition-all duration-200 touch-manipulation flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -241,7 +256,7 @@ export default function ChatWindow() {
         </div>
       </div>
 
-      {/* Quick Actions - Only show when no messages or at start */}
+      {/* Quick Actions - Only at start */}
       {(messages.length === 0 || showWelcome) && (
         <div className="px-2 py-2 sm:px-4 sm:py-2.5 border-b border-black/[0.04] bg-[#FAFAFA]/80 flex-shrink-0 animate-fade-in">
           <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-hide -mx-0.5 px-0.5">
@@ -261,7 +276,7 @@ export default function ChatWindow() {
         </div>
       )}
 
-      {/* Messages Area - Scrollable */}
+      {/* Messages Area */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 overscroll-contain scroll-smooth"
@@ -289,17 +304,13 @@ export default function ChatWindow() {
                 )}
               </div>
               <div className="flex-shrink-0 mt-1">
-                <img
-                  src="/logo.png"
-                  alt=""
-                  className="w-7 h-7 object-contain"
-                />
+                <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
               </div>
             </div>
           </div>
         )}
 
-        {/* Regular Messages */}
+        {/* Messages */}
         {messages.map((message, index) => (
           <ChatMessage
             key={message.id}
@@ -324,11 +335,7 @@ export default function ChatWindow() {
                 </div>
               </div>
               <div className="flex-shrink-0 mt-1">
-                <img
-                  src="/logo.png"
-                  alt=""
-                  className="w-7 h-7 object-contain opacity-50"
-                />
+                <img src="/logo.png" alt="" className="w-7 h-7 object-contain opacity-50" />
               </div>
             </div>
           </div>
@@ -339,13 +346,13 @@ export default function ChatWindow() {
           <ChatMessage role="assistant" content={streamingContent} isNew />
         )}
 
-        {/* Follow-up Suggestions */}
+        {/* Dynamic Follow-up Suggestions */}
         {showFollowUps && (
           <div className="flex justify-end animate-fade-in-up pt-2">
             <div className="flex flex-wrap gap-1.5 justify-end max-w-[90%]">
-              {FOLLOW_UP_SUGGESTIONS.map((suggestion, index) => (
+              {followUpSuggestions.map((suggestion, index) => (
                 <button
-                  key={suggestion}
+                  key={`${suggestion}-${index}`}
                   onClick={() => handleSend(suggestion)}
                   className="text-[11px] sm:text-xs px-3 py-1.5 rounded-full bg-[#FF6B35]/10 text-[#FF6B35] hover:bg-[#FF6B35]/20 transition-colors animate-fade-in"
                   style={{ animationDelay: `${index * 75}ms` }}
